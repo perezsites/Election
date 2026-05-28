@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Election Site | Facial Recognition Voting</title>
+    <!-- Link to existing face-api.min.js in your trebedit library -->
+    <script src="face-api.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #0a0f1e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .entry-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            background-image: url('el.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            min-height: 460px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #1e2a3a;
+        }
+
+        .hero-overlay {
+            background: rgba(0, 0, 0, 0.55);
+            width: 100%;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .entry-buttons {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .entry-btn {
+            background: white;
+            border: none;
+            padding: 14px 42px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-family: inherit;
+        }
+
+        .entry-btn.voter-btn {
+            background: #2c7da0;
+            color: white;
+        }
+
+        .entry-btn.manager-btn {
+            background: #2e3b4e;
+            color: #f0f0f0;
+        }
+
+        .entry-btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.02);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            color: white;
+            text-shadow: 2px 2px 5px black;
+        }
+
+        .small-credit {
+            font-size: 0.65rem;
+            text-align: center;
+            padding: 6px 10px;
+            background: #f8f9fc;
+            color: #9ca3af;
+            border-top: 1px solid #e9ecef;
+            font-family: monospace;
+            opacity: 0.7;
+        }
+
+        .panel {
+            background: #fefefe;
+            padding: 1.8rem 2rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            background: #e9ecef;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            color: #0f172a;
+        }
+
+        .form-card {
+            background: #f1f5f9;
+            padding: 1.2rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+
+        input, button {
+            padding: 10px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        button {
+            background: #0f3b5c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #1e4a6e;
+        }
+
+        .candidate-card {
+            background: white;
+            margin: 12px 0;
+            padding: 15px 20px;
+            border-radius: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 6px solid #2c7da0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .candidate-info {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .vote-count {
+            background: #2c7da0;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .voter-tag {
+            background: #e2e8f0;
+            margin: 6px;
+            padding: 6px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+
+        .face-section {
+            text-align: center;
+            background: #eef2ff;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        #videoFeed, #enrollVideo, #voterVideo {
+            width: 100%;
+            max-width: 450px;
+            border-radius: 28px;
+            border: 3px solid #2c7da0;
+            background: #000;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .face-status {
+            font-weight: bold;
+            margin: 12px 0;
+            padding: 10px;
+            border-radius: 40px;
+        }
+
+        .success-msg {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .error-msg {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .warning-msg {
+            background: #fed7aa;
+            color: #9b4a00;
+        }
+
+        .vote-btn {
+            background: #10b981;
+            padding: 8px 28px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .vote-btn:disabled {
+            background: #9aaeb9;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 700px) {
+            .entry-buttons { gap: 1rem; }
+            .entry-btn { padding: 10px 24px; font-size: 1rem; }
+            .panel { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="entry-container" id="appRoot"></div>
+
+<script>
+    // ---------- GLOBAL STATE ----------
+    let appState = {
+        currentView: 'entry',
+        voters: [],      // { id, name, faceDescriptor }
+        candidates: [],  // { id, name, position, votes }
+        votes: [],       // { voterId, candidateId, timestamp }
+        modelsLoaded: false,
+        cameraStream: null,
+        recognitionInterval: null
+    };
+
+    const MANAGER_PASSWORD = "$hjjjhhggwuu$j";
+    const STORAGE_KEY = "election_site_data";
+
+    // Load persisted data from localStorage (permanent storage)
+    function loadData() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                appState.voters = data.voters || [];
+                appState.candidates = data.candidates || [];
+                appState.votes = data.votes || [];
+                // restore accurate vote counts for candidates (immutable counts)
+                appState.candidates.forEach(c => {
+                    const voteCount = appState.votes.filter(v => v.candidateId === c.id).length;
+                    c.votes = voteCount;
+                });
+            } catch(e) { console.warn(e); }
+        }
+    }
+
+    // Save data permanently - votes cannot be changed/deleted once stored
+    function saveData() {
+        const toSave = {
+            voters: appState.voters.map(v => ({ id: v.id, name: v.name, faceDescriptor: v.faceDescriptor })),
+            candidates: appState.candidates.map(c => ({ id: c.id, name: c.name, position: c.position, votes: c.votes })),
+            votes: appState.votes
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }
+
+    // ---------- FACE API INITIALIZATION (using existing face-api.min.js) ----------
+    async function loadFaceModels() {
+        // The models need to be loaded from a CDN since the library doesn't include weights
+        // This is standard for face-api.js - the weights files must be fetched
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/models';
+        try {
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            appState.modelsLoaded = true;
+            console.log("Face models loaded successfully");
+            return true;
+        } catch(err) {
+            console.error("Model load error:", err);
+            return false;
+        }
+    }
+
+    // Get face descriptor from video element
+    async function getFaceDescriptor(videoElement) {
+        if (!videoElement || videoElement.readyState < 2) return null;
+        if (!appState.modelsLoaded) return null;
+        const detection = await faceapi.detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+        if (!detection) return null;
+        return detection.descriptor;
+    }
+
+    // Compare face descriptors (Euclidean distance)
+    function matchFace(descriptor1, descriptor2) {
+        if (!descriptor1 || !descriptor2) return false;
+        const distance = faceapi.euclideanDistance(descriptor1, descriptor2);
+        return distance < 0.6; // threshold for matching
+    }
+
+    // Find voter by face descriptor
+    function findVoterByFace(descriptor) {
+        for (let voter of appState.voters) {
+            if (matchFace(descriptor, voter.faceDescriptor)) {
+                return voter;
+            }
+        }
+        return null;
+    }
+
+    // ---------- CAMERA HELPERS ----------
+    async function getCameraStream() {
+        if (appState.cameraStream && appState.cameraStream.active) return appState.cameraStream;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            appState.cameraStream = stream;
+            return stream;
+        } catch(e) { return null; }
+    }
+
+    function stopCamera() {
+        if (appState.cameraStream) {
+            appState.cameraStream.getTracks().forEach(track => track.stop());
+            appState.cameraStream = null;
+        }
+    }
+
+    function stopRecognition() {
+        if (appState.recognitionInterval) {
+            clearInterval(appState.recognitionInterval);
+            appState.recognitionInterval = null;
+        }
+    }
+
+    // ---------- RENDER HELPERS ----------
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+    }
+
+    // Render manager dashboard with live, immutable vote counts
+    function renderManagerDashboard() {
+        const container = document.getElementById('candidatesListManager');
+        if (!container) return;
+        if (appState.candidates.length === 0) {
+            container.innerHTML = '<i>No candidates added yet</i>';
+            return;
+        }
+        // Display candidates with their permanent vote counts
+        container.innerHTML = appState.candidates.map(c => `
+            <div class="candidate-card">
+                <div class="candidate-info">
+                    <strong>${escapeHtml(c.name)}</strong> - ${escapeHtml(c.position)}
+                </div>
+                <div class="vote-count">
+                    🗳️ ${c.votes || 0} vote(s)
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Render voter list in manager panel
+    function renderVoterList() {
+        const container = document.getElementById('votersListManager');
+        if (!container) return;
+        if (appState.voters.length === 0) {
+            container.innerHTML = '<i>No registered voters</i>';
+            return;
+        }
+        container.innerHTML = appState.voters.map(v => `<span class="voter-tag">✅ ${escapeHtml(v.name)}</span>`).join('');
+    }
+
+    // Render candidates for voting (voter portal)
+    function renderVotingOptions(voterId, voterName) {
+        const container = document.getElementById('candidateVoteList');
+        if (!container) return;
+        if (appState.candidates.length === 0) {
+            container.innerHTML = '<i>No candidates available for voting</i>';
+            return;
+        }
+        const hasVoted = appState.votes.some(v => v.voterId === voterId);
+        if (hasVoted) {
+            container.innerHTML = '<div class="warning-msg face-status">⚠️ You have already voted. Thank you for participating!</div>';
+            return;
+        }
+        container.innerHTML = appState.candidates.map(c => `
+            <div class="candidate-card">
+                <div class="candidate-info">
+                    <strong>${escapeHtml(c.name)}</strong> - ${escapeHtml(c.position)}
+                </div>
+                <button class="vote-btn" data-candidate-id="${c.id}" data-candidate-name="${escapeHtml(c.name)}">
+                    Vote for ${escapeHtml(c.name)}
+                </button>
+            </div>
+        `).join('');
+        
+        document.querySelectorAll('.vote-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const candidateId = btn.getAttribute('data-candidate-id');
+                const candidateName = btn.getAttribute('data-candidate-name');
+                
+                // Double-check voter hasn't voted already (security)
+                const alreadyVoted = appState.votes.some(v => v.voterId === voterId);
+                if (alreadyVoted) {
+                    document.getElementById('voteFeedback').innerHTML = '<div class="error-msg face-status">❌ You have already voted!</div>';
+                    renderVotingOptions(voterId, voterName);
+                    return;
+                }
+                
+                // Record vote permanently
+                appState.votes.push({ voterId: voterId, candidateId: candidateId, timestamp: Date.now() });
+                // Update candidate vote count
+                const candidate = appState.candidates.find(c => c.id == candidateId);
+                if (candidate) {
+                    candidate.votes = (candidate.votes || 0) + 1;
+                }
+                saveData(); // Permanently stored - cannot be changed or deleted
+                
+                document.getElementById('voteFeedback').innerHTML = '<div class="success-msg face-status">✅ Vote recorded for ' + candidateName + '! This vote is permanently stored.</div>';
+                renderVotingOptions(voterId, voterName);
+                if (document.getElementById('voterNameDisplay')) {
+                    document.getElementById('voterNameDisplay').innerHTML = `<div class="success-msg">✓ Voted successfully!</div>`;
+                }
+            });
+        });
+    }
+
+    // ---------- MAIN RENDER ENGINE ----------
+    async function render() {
+        const root = document.getElementById('appRoot');
+        if (!root) return;
+
+        if (appState.currentView === 'entry') {
+            root.innerHTML = `
+                <div class="hero-bg">
+                    <div class="hero-overlay">
+                        <h1>🗳️ ELECTION SITE</h1>
+                        <div class="entry-buttons">
+                            <button class="entry-btn voter-btn" id="gotoVoterBtn">VOTER PORTAL</button>
+                            <button class="entry-btn manager-btn" id="gotoManagerBtn">MANAGER LOGIN</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="small-credit">Perezsites • +2349012105476</div>
+            `;
+            document.getElementById('gotoVoterBtn')?.addEventListener('click', () => { stopCamera(); stopRecognition(); appState.currentView = 'voterPanel'; render(); });
+            document.getElementById('gotoManagerBtn')?.addEventListener('click', () => { appState.currentView = 'managerLogin'; render(); });
+        }
+        else if (appState.currentView === 'managerLogin') {
+            root.innerHTML = `
+                <div class="panel">
+                    <div class="panel-header"><h2>🔐 Manager Access</h2><button class="back-btn" id="backEntry">← Back</button></div>
+                    <div class="form-card"><div class="form-row"><label>Enter Password</label><input type="password" id="managerPwd" placeholder="••••••••"><button id="submitLogin">Login</button><div id="loginMsg"></div></div></div>
+                    <div class="small-credit">Perezsites • +2349012105476</div>
+                </div>
+            `;
+            document.getElementById('backEntry')?.addEventListener('click', () => { appState.currentView='entry'; render(); });
+            document.getElementById('submitLogin')?.addEventListener('click', () => {
+                if (document.getElementById('managerPwd')?.value === MANAGER_PASSWORD) {
+                    appState.currentView = 'managerPanel';
+                    render();
+                } else {
+                    document.getElementById('loginMsg').innerHTML = '<div class="error-msg face-status">Invalid password</div>';
+                }
+            });
+        }
+        else if (appState.currentView === 'managerPanel') {
+            root.innerHTML = `
+                <div class="panel">
+                    <div class="panel-header"><h2>📋 Manager Dashboard</h2><button class="back-btn" id="logoutManager">Logout</button></div>
+                    
+                    <div class="form-card"><h3>📸 Register New Voter (Face Enrollment)</h3>
+                    <div class="form-row"><label>Voter Full Name</label><input id="voterName" placeholder="e.g., John Doe"></div>
+                    <video id="enrollVideo" autoplay muted playsinline></video>
+                    <button id="startEnrollCamera">📷 Start Camera</button>
+                    <button id="captureAndRegister">📸 Capture Face & Register</button>
+                    <div id="enrollStatus"></div></div>
+                    
+                    <div class="form-card"><h3>➕ Add Candidate</h3>
+                    <div class="form-row"><label>Candidate Name</label><input id="candName" placeholder="Full name"></div>
+                    <div class="form-row"><label>Position</label><input id="candPosition" placeholder="e.g., President"></div>
+                    <button id="addCandidateBtn">Add Candidate</button>
+                    <div id="candMsg"></div></div>
+                    
+                    <div class="form-card"><h3>📋 Registered Voters (Face-Enabled)</h3>
+                    <div id="votersListManager"></div></div>
+                    
+                    <div class="form-card"><h3>🏛️ Live Election Results (Permanent & Immutable Votes)</h3>
+                    <div id="candidatesListManager"></div>
+                    <div class="small-credit" style="margin-top:12px;">※ Votes are stored permanently in localStorage and cannot be changed or deleted</div></div>
+                    
+                    <div class="small-credit">Perezsites • +2349012105476</div>
+                </div>
+            `;
+            
+            renderVoterList();
+            renderManagerDashboard();
+            
+            let enrollVideoElem = null;
+            document.getElementById('logoutManager')?.addEventListener('click', () => { stopCamera(); appState.currentView='entry'; render(); });
+            document.getElementById('startEnrollCamera')?.addEventListener('click', async () => {
+                const stream = await getCameraStream();
+                enrollVideoElem = document.getElementById('enrollVideo');
+                if (stream && enrollVideoElem) { enrollVideoElem.srcObject = stream; await enrollVideoElem.play(); }
+            });
+            document.getElementById('captureAndRegister')?.addEventListener('click', async () => {
+                const name = document.getElementById('voterName').value.trim();
+                if (!name) { document.getElementById('enrollStatus').innerHTML = '<div class="error-msg face-status">Enter voter name</div>'; return; }
+                const video = document.getElementById('enrollVideo');
+                if (!video || !video.srcObject) { document.getElementById('enrollStatus').innerHTML = '<div class="error-msg face-status">Start camera first</div>'; return; }
+                if (!appState.modelsLoaded) { document.getElementById('enrollStatus').innerHTML = '<div class="warning-msg face-status">Loading face models, please wait...</div>'; return; }
+                
+                const descriptor = await getFaceDescriptor(video);
+                if (!descriptor) {
+                    document.getElementById('enrollStatus').innerHTML = '<div class="error-msg face-status">No face detected. Please look at camera clearly.</div>';
+                    return;
+                }
+                // Check for duplicate face
+                const existing = findVoterByFace(descriptor);
+                if (existing) {
+                    document.getElementById('enrollStatus').innerHTML = `<div class="error-msg face-status">Face already registered as ${escapeHtml(existing.name)}</div>`;
+                    return;
+                }
+                const newVoter = { id: Date.now() + Math.random(), name: name, faceDescriptor: Array.from(descriptor) };
+                appState.voters.push(newVoter);
+                saveData();
+                document.getElementById('enrollStatus').innerHTML = `<div class="success-msg face-status">✅ ${escapeHtml(name)} registered successfully with face recognition!</div>`;
+                document.getElementById('voterName').value = '';
+                renderVoterList();
+            });
+            document.getElementById('addCandidateBtn')?.addEventListener('click', () => {
+                const cname = document.getElementById('candName')?.value.trim();
+                const pos = document.getElementById('candPosition')?.value.trim();
+                if (cname && pos) {
+                    const newCandidate = { id: Date.now() + Math.random(), name: cname, position: pos, votes: 0 };
+                    appState.candidates.push(newCandidate);
+                    saveData();
+                    document.getElementById('candMsg').innerHTML = '<div class="success-msg face-status">Candidate added successfully</div>';
+                    document.getElementById('candName').value = '';
+                    document.getElementById('candPosition').value = '';
+                    renderManagerDashboard();
+                } else {
+                    document.getElementById('candMsg').innerHTML = '<div class="error-msg face-status">Both fields required</div>';
+                }
+            });
+        }
+        else if (appState.currentView === 'voterPanel') {
+            root.innerHTML = `
+                <div class="panel">
+                    <div class="panel-header"><h2>🗳️ Voter Portal - Facial Recognition Voting</h2><button class="back-btn" id="backEntryVoter">← Exit</button></div>
+                    <div class="face-section">
+                        <video id="voterVideo" autoplay muted playsinline></video>
+                        <button id="startVoterCamera">📷 Start Camera</button>
+                        <button id="startFaceRecognition">🔍 Recognize My Face & Vote</button>
+                        <div id="recognitionStatus" class="face-status"></div>
+                        <div id="voterNameDisplay"></div>
+                    </div>
+                    <div id="votingPanel" style="display: none;">
+                        <h3>🗳️ Cast Your Vote</h3>
+                        <div id="candidateVoteList"></div>
+                        <div id="voteFeedback"></div>
+                    </div>
+                    <div class="small-credit">Perezsites • +2349012105476</div>
+                </div>
+            `;
+            
+            let voterVideoElem = null;
+            let recognizedVoter = null;
+            
+            document.getElementById('startVoterCamera')?.addEventListener('click', async () => {
+                const stream = await getCameraStream();
+                voterVideoElem = document.getElementById('voterVideo');
+                if (stream && voterVideoElem) { voterVideoElem.srcObject = stream; await voterVideoElem.play(); }
+            });
+            
+            document.getElementById('startFaceRecognition')?.addEventListener('click', async () => {
+                const video = document.getElementById('voterVideo');
+                if (!video || !video.srcObject) { document.getElementById('recognitionStatus').innerHTML = '<div class="error-msg">Please start camera first</div>'; return; }
+                if (!appState.modelsLoaded) { document.getElementById('recognitionStatus').innerHTML = '<div class="warning-msg">Loading face models, please wait...</div>'; return; }
+                
+                document.getElementById('recognitionStatus').innerHTML = '<div class="warning-msg">🔍 Scanning your face...</div>';
+                
+                const descriptor = await getFaceDescriptor(video);
+                if (!descriptor) {
+                    document.getElementById('recognitionStatus').innerHTML = '<div class="error-msg">No face detected. Please look at camera clearly.</div>';
+                    return;
+                }
+                
+                const matchedVoter = findVoterByFace(descriptor);
+                if (!matchedVoter) {
+                    document.getElementById('recognitionStatus').innerHTML = '<div class="error-msg">❌ Face not recognized. You are not an authorized voter.</div>';
+                    document.getElementById('votingPanel').style.display = 'none';
+                    return;
+                }
+                
+                const hasVoted = appState.votes.some(v => v.voterId === matchedVoter.id);
+                if (hasVoted) {
+                    document.getElementById('recognitionStatus').innerHTML = `<div class="error-msg">❌ ${escapeHtml(matchedVoter.name)}, you have already voted. Each person can vote only once.</div>`;
+                    document.getElementById('votingPanel').style.display = 'none';
+                    return;
+                }
+                
+                recognizedVoter = matchedVoter;
+                document.getElementById('recognitionStatus').innerHTML = `<div class="success-msg">✅ Welcome ${escapeHtml(matchedVoter.name)}! You can now vote.</div>`;
+                document.getElementById('voterNameDisplay').innerHTML = `<div class="success-msg">✓ Authenticated as: ${escapeHtml(matchedVoter.name)}</div>`;
+                document.getElementById('votingPanel').style.display = 'block';
+                renderVotingOptions(matchedVoter.id, matchedVoter.name);
+            });
+            
+            document.getElementById('backEntryVoter')?.addEventListener('click', () => { stopCamera(); stopRecognition(); appState.currentView='entry'; render(); });
+        }
+    }
+
+    // Initialize: load data, load face models, then render
+    async function init() {
+        loadData();
+        // Load face models from CDN (weights required for face-api.js to work)
+        await loadFaceModels();
+        render();
+    }
+    
+    init();
+</script>
+</body>
+</html>
